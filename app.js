@@ -1,12 +1,12 @@
 const app = document.getElementById("app");
 
 const stops = [
-  { stopId: 1, name: "Chittoor" },
+  { stopId: 1, name: "Stop 1" },
   { stopId: 2, name: "Stop 2" },
   { stopId: 3, name: "Stop 3" },
   { stopId: 4, name: "Stop 4" },
   { stopId: 5, name: "Stop 5" },
-  { stopId: 6, name: "Tirupati" },
+  { stopId: 6, name: "Stop 6" },
 ];
 
 const buses = [
@@ -116,7 +116,6 @@ function renderBusComparison() {
       </div>
     `;
   }).join("");
-
   app.innerHTML = `
     <div class="comparison">
       <h2>Available Buses</h2>

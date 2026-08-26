@@ -1,0 +1,79 @@
+body {
+  font-family: sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  background: #f4f4f4;
+  text-align: center;
+}
+
+.home button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+.journey {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 280px;
+}
+
+.journey label {
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.journey select,
+.journey button {
+  padding: 8px;
+  font-size: 15px;
+}
+
+.preferences {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.pref-btn {
+  flex: 1;
+  cursor: pointer;
+}
+
+.pref-btn.active {
+  background: #333;
+  color: white;
+}
+.comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 300px;
+}
+
+.bus-card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 12px;
+  background: white;
+  text-align: left;
+}
+
+.bus-card h3 {
+  margin: 0 0 6px 0;
+}
+
+.bus-card p {
+  margin: 2px 0;
+}
+.recommendation {
+  width: 300px;
+  text-align: center;
+}
+
+.recommendation p {
+  margin: 6px 0;
+}

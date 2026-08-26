@@ -15,21 +15,21 @@ const buses = [
     capacity: 50,
     currentPassengers: 36,
     arrivalTime: 3,
-    predictedOccupancyPercent: 94,
+    historicalIncrement: 10,
   },
   {
     busId: "102",
     capacity: 50,
     currentPassengers: 24,
     arrivalTime: 7,
-    predictedOccupancyPercent: 63,
+    historicalIncrement: 7,
   },
   {
     busId: "103",
     capacity: 50,
     currentPassengers: 20,
     arrivalTime: 12,
-    predictedOccupancyPercent: 52,
+    historicalIncrement: 6,
   },
 ];
 
@@ -37,16 +37,27 @@ let selectedFrom = null;
 let selectedTo = null;
 let selectedPreference = "balanced"; // default
 
+// --- Shared prediction helper ---
+function getBusStats(bus) {
+  const currentOccupancyPercent = Math.round((bus.currentPassengers / bus.capacity) * 100);
+  const predictedPassengers = Math.min(bus.currentPassengers + bus.historicalIncrement, bus.capacity);
+  const predictedOccupancyPercent = Math.round((predictedPassengers / bus.capacity) * 100);
+  const isCrowded = predictedOccupancyPercent >= 80;
+  return { currentOccupancyPercent, predictedOccupancyPercent, isCrowded };
+}
+
 function renderHome() {
   app.innerHTML = `
     <div class="home">
       <h1>🚌 SmartRide AI</h1>
       <p>Don't just track your bus. Choose the better bus.</p>
       <button id="findBusBtn">Find My Bus</button>
+      <button id="adminBtn" class="admin-link">Conductor Panel</button>
     </div>
   `;
 
   document.getElementById("findBusBtn").addEventListener("click", renderJourneySelection);
+  document.getElementById("adminBtn").addEventListener("click", renderAdminPanel);
 }
 
 function renderJourneySelection() {
@@ -90,15 +101,14 @@ function renderJourneySelection() {
 
 function renderBusComparison() {
   const busCards = buses.map(bus => {
-    const currentOccupancyPercent = Math.round((bus.currentPassengers / bus.capacity) * 100);
-    const isCrowded = bus.predictedOccupancyPercent >= 80;
+    const { currentOccupancyPercent, predictedOccupancyPercent, isCrowded } = getBusStats(bus);
 
     return `
       <div class="bus-card">
         <h3>🚌 Bus ${bus.busId}</h3>
         <p>Arrives in: ${bus.arrivalTime} min</p>
         <p>Current occupancy: ${currentOccupancyPercent}%</p>
-        <p>Predicted occupancy: ${bus.predictedOccupancyPercent}%</p>
+        <p>Predicted occupancy: ${predictedOccupancyPercent}%</p>
         <p>${isCrowded ? "🔴 Very crowded" : "🟢 Low crowding"}</p>
       </div>
     `;
@@ -120,18 +130,25 @@ function pickRecommendedBus() {
     return buses.reduce((a, b) => (a.arrivalTime < b.arrivalTime ? a : b));
   }
   if (selectedPreference === "comfort") {
-    return buses.reduce((a, b) => (a.predictedOccupancyPercent < b.predictedOccupancyPercent ? a : b));
+    return buses.reduce((a, b) => {
+      const statsA = getBusStats(a);
+      const statsB = getBusStats(b);
+      return statsA.predictedOccupancyPercent < statsB.predictedOccupancyPercent ? a : b;
+    });
   }
   // balanced: score = arrivalTime + predictedOccupancyPercent (lower is better)
   return buses.reduce((a, b) => {
-    const scoreA = a.arrivalTime + a.predictedOccupancyPercent;
-    const scoreB = b.arrivalTime + b.predictedOccupancyPercent;
+    const statsA = getBusStats(a);
+    const statsB = getBusStats(b);
+    const scoreA = a.arrivalTime + statsA.predictedOccupancyPercent;
+    const scoreB = b.arrivalTime + statsB.predictedOccupancyPercent;
     return scoreA < scoreB ? a : b;
   });
 }
 
 function renderRecommendation() {
   const bus = pickRecommendedBus();
+  const { predictedOccupancyPercent } = getBusStats(bus);
 
   const reasons = {
     fastest: "It has the shortest waiting time among all available buses.",
@@ -145,12 +162,63 @@ function renderRecommendation() {
       <h1>🚌 Bus ${bus.busId}</h1>
       <p><strong>Why?</strong></p>
       <p>${reasons[selectedPreference]}</p>
-      <p>Arrives in ${bus.arrivalTime} min, predicted occupancy ${bus.predictedOccupancyPercent}%.</p>
+      <p>Arrives in ${bus.arrivalTime} min, predicted occupancy ${predictedOccupancyPercent}%.</p>
       <button id="startOverBtn">Start Over</button>
     </div>
   `;
 
   document.getElementById("startOverBtn").addEventListener("click", renderHome);
+}
+
+function renderAdminPanel() {
+  const rows = buses.map(bus => {
+    const { currentOccupancyPercent } = getBusStats(bus);
+    return `
+      <div class="admin-row" data-bus="${bus.busId}">
+        <h3>🚌 Bus ${bus.busId}</h3>
+        <p>Passengers: <span class="pax-count">${bus.currentPassengers}</span> / ${bus.capacity}</p>
+        <p>Occupancy: <span class="occ-percent">${currentOccupancyPercent}%</span></p>
+        <div class="admin-controls">
+          <button class="minus-btn" data-bus="${bus.busId}">−</button>
+          <button class="plus-btn" data-bus="${bus.busId}">+</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  app.innerHTML = `
+    <div class="admin">
+      <h2>Conductor Panel</h2>
+      ${rows}
+      <button id="backHomeBtn">Back to Home</button>
+    </div>
+  `;
+
+  function updateRow(busId) {
+    const bus = buses.find(b => b.busId === busId);
+    const row = document.querySelector(`.admin-row[data-bus="${busId}"]`);
+    const { currentOccupancyPercent } = getBusStats(bus);
+    row.querySelector(".pax-count").textContent = bus.currentPassengers;
+    row.querySelector(".occ-percent").textContent = `${currentOccupancyPercent}%`;
+  }
+
+  document.querySelectorAll(".plus-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const bus = buses.find(b => b.busId === btn.dataset.bus);
+      if (bus.currentPassengers < bus.capacity) bus.currentPassengers++;
+      updateRow(btn.dataset.bus);
+    });
+  });
+
+  document.querySelectorAll(".minus-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const bus = buses.find(b => b.busId === btn.dataset.bus);
+      if (bus.currentPassengers > 0) bus.currentPassengers--;
+      updateRow(btn.dataset.bus);
+    });
+  });
+
+  document.getElementById("backHomeBtn").addEventListener("click", renderHome);
 }
 
 renderHome();

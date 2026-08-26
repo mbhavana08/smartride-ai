@@ -1,12 +1,12 @@
 const app = document.getElementById("app");
 
 const stops = [
-  { stopId: 1, name: "Stop 1" },
+  { stopId: 1, name: "Chittoor" },
   { stopId: 2, name: "Stop 2" },
   { stopId: 3, name: "Stop 3" },
   { stopId: 4, name: "Stop 4" },
   { stopId: 5, name: "Stop 5" },
-  { stopId: 6, name: "Stop 6" },
+  { stopId: 6, name: "Tirupati" },
 ];
 
 const buses = [
@@ -100,12 +100,15 @@ function renderJourneySelection() {
 }
 
 function renderBusComparison() {
+  const recommendedBus = pickRecommendedBus();
+
   const busCards = buses.map(bus => {
     const { currentOccupancyPercent, predictedOccupancyPercent, isCrowded } = getBusStats(bus);
+    const isRecommended = bus.busId === recommendedBus.busId;
 
     return `
-      <div class="bus-card">
-        <h3>🚌 Bus ${bus.busId}</h3>
+      <div class="bus-card ${isRecommended ? "recommended" : ""}">
+        <h3>🚌 Bus ${bus.busId} ${isRecommended ? "⭐ AI RECOMMENDED" : ""}</h3>
         <p>Arrives in: ${bus.arrivalTime} min</p>
         <p>Current occupancy: ${currentOccupancyPercent}%</p>
         <p>Predicted occupancy: ${predictedOccupancyPercent}%</p>

@@ -113,3 +113,8 @@ body {
   font-size: 16px;
   cursor: pointer;
 }
+
+.bus-card.recommended {
+  border: 2px solid #2e7d32;
+  background: #f0fff4;
+}
